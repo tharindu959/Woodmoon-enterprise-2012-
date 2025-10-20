@@ -22,6 +22,7 @@ export type User = {
   fullName: string;
   email: string;
   status: "active" | "inactive";
+  role: "admin" | "user"; // added role
 };
 
 export const columns: ColumnDef<User>[] = [
@@ -98,9 +99,43 @@ export const columns: ColumnDef<User>[] = [
     },
   },
   {
+    accessorKey: "role",
+    header: "Role",
+    cell: ({ row }) => {
+      const role = row.getValue("role");
+      return (
+        <span
+          className={`px-2 py-1 rounded text-xs ${
+            role === "admin" ? "bg-blue-500/30" : "bg-gray-500/30"
+          }`}
+        >
+          {role as string}
+        </span>
+      );
+    },
+  },
+  {
     id: "actions",
     cell: ({ row }) => {
       const user = row.original;
+
+      const handleDeleteSingle = async () => {
+        if (!confirm(`Delete user ${user.fullName}?`)) return;
+        try {
+          const res = await fetch("http://localhost:8080/api/admin/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids: [user.id] }),
+          });
+
+          if (!res.ok) throw new Error("delete failed");
+          alert("User deleted");
+          window.location.reload();
+        } catch (err) {
+          console.error(err);
+          alert("Failed to delete user");
+        }
+      };
 
       return (
         <DropdownMenu>
@@ -112,15 +147,14 @@ export const columns: ColumnDef<User>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(user.id)}
-            >
+            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(user.id)}>
               Copy user ID
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <Link href={`/users/${user.id}`}>View customer</Link>
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleDeleteSingle}>Delete user</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

@@ -48,12 +48,39 @@ export function DataTable<TData, TValue>({
     },
   });
 
+  const selectedIds = table
+    .getSelectedRowModel()
+    .flatRows.map((r) => (r.original as any).id);
+
+  const handleDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Delete ${selectedIds.length} user(s)?`)) return;
+
+    try {
+      const res = await fetch("http://localhost:8080/api/admin/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+
+      if (!res.ok) throw new Error("delete failed");
+      alert("Deleted successfully");
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete users");
+    }
+  };
+
   return (
     <div className="rounded-md border">
-      {Object.keys(rowSelection).length > 0 && (
+      {selectedIds.length > 0 && (
         <div className="flex justify-end">
-          <button className="flex items-center gap-2 bg-red-500 text-white px-2 py-1 text-sm rounded-md m-4 cursor-pointer">
-            <Trash2 className="w-4 h-4"/>
+          <button
+            onClick={handleDelete}
+            className="flex items-center gap-2 bg-red-500 text-white px-2 py-1 text-sm rounded-md m-4 cursor-pointer"
+          >
+            <Trash2 className="w-4 h-4" />
             Delete User(s)
           </button>
         </div>
@@ -93,7 +120,7 @@ export function DataTable<TData, TValue>({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
+              <TableCell colSpan={columns.length as any} className="h-24 text-center">
                 No results.
               </TableCell>
             </TableRow>
