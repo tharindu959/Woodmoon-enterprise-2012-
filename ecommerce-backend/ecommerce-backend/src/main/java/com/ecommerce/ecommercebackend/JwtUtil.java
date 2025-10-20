@@ -48,13 +48,19 @@ public class JwtUtil {
         return extractClaim(token, Claims::getExpiration).before(new Date());
     }
 
-    public Boolean validateToken(String token, UserDetails userDetails) {
+    // This method is used by JwtAuthenticationFilter
+    public Boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
+    // You can keep validateToken for backward compatibility
+    public Boolean validateToken(String token, UserDetails userDetails) {
+        return isTokenValid(token, userDetails);
+    }
+
     // --- Token Generation Method ---
-    
+
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
         return Jwts.builder()
